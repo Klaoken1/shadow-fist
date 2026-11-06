@@ -1,0 +1,9 @@
+# signing key: never upload
+*.keystore
+*.apk
+*.idsig
+build/
+out/
+web/index.html
+.DS_Store
+xcuserdata/

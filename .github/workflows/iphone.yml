@@ -1,0 +1,42 @@
+# Runs on GitHub's Macs: compiles an unsigned ShadowFist.ipa and publishes the home-screen web app.
+name: iPhone
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  ipa:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile
+        run: |
+          xcodebuild -project ios/ShadowFist.xcodeproj -target ShadowFist -configuration Release -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO SYMROOT="$PWD/out"
+      - name: Package
+        run: |
+          mkdir Payload
+          cp -R out/Release-iphoneos/ShadowFist.app Payload/
+          zip -qry ShadowFist.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ShadowFist-ipa
+          path: ShadowFist.ipa
+  web:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash build-web.sh
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deploy
+        uses: actions/deploy-pages@v4
